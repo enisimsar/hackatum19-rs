@@ -93,7 +93,7 @@ class DUT:
         self.meas_eigenvalue = np.random.random(self.numMeas)
         # ... and normalise it
         self.meas_eigenvalue *= self.numMeas / np.sum(self.meas_eigenvalue)
-        # generate covariance matrix based on random eigenvector
+        # generate covarance matrix based on random eigenvector
         self.meas_cov = rndcorr.rvs(self.meas_eigenvalue)
 
         self.meas_noise = np.zeros((self.numMeas, self.numMeas))
@@ -110,6 +110,8 @@ class DUT:
 
         self.errordutcount = 0
         self.errormeascount = 0
+
+        self.defected_meas = np.random.choice(range(self.numMeas), np.random.randint(1, self.numMeas//8), replace=False)
 
     def info(self):
         return self.DutMeasTime, self.numMeas, self.numPorts, self.meas, self.ports, self.exp_yield
@@ -131,7 +133,12 @@ class DUT:
         self.meas_result = True
 
         self.dist_max=0
-        self.meas_noise = np.random.multivariate_normal(np.zeros(self.numMeas), self.meas_cov) / self.exp_yield
+        # self.meas_noise = np.random.multivariate_normal(np.zeros(self.numMeas), self.meas_cov) / self.exp_yield
+
+        sigma = np.ones(self.numMeas) * np.random.exponential(scale=0.1)
+        sigma[self.defected_meas] = np.random.exponential(scale=0.2)
+        self.meas_noise = np.random.normal(np.zeros(self.numMeas), sigma)
+
         for index in range(self.numPorts):
             self.port_noise[index] = self.ports[index].get_port_error(self.measurement_time - self.lastCal)
 
