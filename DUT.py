@@ -164,7 +164,7 @@ class DUT:
             t, result, dist = self.gen_meas_idx(i)
         return self.measurement_time, self.dut_result, self.dist_max
 
-    def gen_meas_idx(self, idx):
+    def gen_meas_idx(self, idx, incount=True):
         """
         generate individual measurement of the current DUT incrementing the allover measurement time
         :param idx:
@@ -177,7 +177,8 @@ class DUT:
 
         # DUT characteristic
         self.meas[idx].meas_dist = self.meas_noise[idx] ** 2
-        self.measurement_time += self.meas[idx].meas_time
+        if incount:
+            self.measurement_time += self.meas[idx].meas_time
         if self.meas[idx].meas_dist > self.dist_max:
             self.dist_max = self.meas[idx].meas_dist
         if self.meas[idx].meas_dist > 1.0:
