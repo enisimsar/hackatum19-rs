@@ -112,6 +112,20 @@ class DUT:
         self.errormeascount = 0
 
         self.defected_meas = np.random.choice(range(self.numMeas), np.random.randint(1, self.numMeas//8), replace=False)
+        self.neg_corr = [
+            (i, j) for i, j in zip(
+                self.defected_meas, 
+                np.random.choice(list(set(range(self.numMeas)) - set(self.defected_meas)), len(self.defected_meas))
+            )
+        ] 
+        self.pos_corr = [
+            (i, j) for i, j in zip(
+                self.defected_meas, 
+                np.random.choice(list(
+                    set(range(self.numMeas)) - set(self.defected_meas) - set([k[1] for k in self.neg_corr])
+                ), len(self.defected_meas))
+            )
+        ] 
 
     def info(self):
         return self.DutMeasTime, self.numMeas, self.numPorts, self.meas, self.ports, self.exp_yield
@@ -133,11 +147,21 @@ class DUT:
         self.meas_result = True
 
         self.dist_max=0
-        # self.meas_noise = np.random.multivariate_normal(np.zeros(self.numMeas), self.meas_cov) / self.exp_yield
-
-        sigma = np.ones(self.numMeas) * np.random.exponential(scale=0.1)
-        sigma[self.defected_meas] = np.random.exponential(scale=0.2)
+        
+        # Apply Importance of Measurements
+        sigma = np.ones(self.numMeas) * np.random.exponential(scale=0.1, size=self.numMeas)
+        sigma[self.defected_meas] = np.random.exponential(scale=0.2, size=len(self.defected_meas))
         self.meas_noise = np.random.normal(np.zeros(self.numMeas), sigma)
+
+        # Apply Correlations
+        squared_meas_noise = list(map(lambda x: x ** 2, self.meas_noise))
+        for i, j in self.neg_corr:
+            if squared_meas_noise[i] < 1.0:
+                self.meas_noise[j] = np.random.normal(0, np.random.exponential(scale=0.2))
+            
+        for i, j in self.pos_corr:
+            if squared_meas_noise[i] < 1.0:
+                self.meas_noise[j] = np.random.normal(0, np.random.exponential(scale=0.01))
 
         for index in range(self.numPorts):
             self.port_noise[index] = self.ports[index].get_port_error(self.measurement_time - self.lastCal)
