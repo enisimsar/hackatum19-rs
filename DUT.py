@@ -111,7 +111,7 @@ class DUT:
         self.errordutcount = 0
         self.errormeascount = 0
 
-        self.defected_meas = np.random.choice(range(self.numMeas), np.random.randint(1, self.numMeas//8), replace=False)
+        self.defected_meas = np.random.choice(range(self.numMeas), np.random.randint(0, self.numMeas//8), replace=False)
         self.neg_corr = [
             (i, j) for i, j in zip(
                 self.defected_meas, 
@@ -149,15 +149,15 @@ class DUT:
         self.dist_max=0
         
         # Apply Importance of Measurements
-        sigma = np.ones(self.numMeas) * np.random.exponential(scale=0.1, size=self.numMeas)
-        sigma[self.defected_meas] = np.random.exponential(scale=0.2, size=len(self.defected_meas))
+        sigma = np.ones(self.numMeas) * np.random.exponential(scale=0.05, size=self.numMeas)
+        sigma[self.defected_meas] = np.random.exponential(scale=0.15, size=len(self.defected_meas))
         self.meas_noise = np.random.normal(np.zeros(self.numMeas), sigma)
 
         # Apply Correlations
         squared_meas_noise = list(map(lambda x: x ** 2, self.meas_noise))
         for i, j in self.neg_corr:
             if squared_meas_noise[i] < 1.0:
-                self.meas_noise[j] = np.random.normal(0, np.random.exponential(scale=0.2))
+                self.meas_noise[j] = np.random.normal(0, np.random.exponential(scale=0.15))
             
         for i, j in self.pos_corr:
             if squared_meas_noise[i] < 1.0:
